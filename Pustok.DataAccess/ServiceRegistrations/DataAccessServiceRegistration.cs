@@ -12,6 +12,8 @@ public static class DataAccessServiceRegistration
     public static IServiceCollection AddDataAccessServices(this IServiceCollection services, IConfiguration configuration)
     {
         services.AddScoped<IProductRepository, ProductRepository>();
+        services.AddScoped<ICategoryRepository, CategoryRepository>();
+
         services.AddDbContext<AppDbContext>(options =>
         {
             options.UseSqlServer(configuration.GetConnectionString("Default"));

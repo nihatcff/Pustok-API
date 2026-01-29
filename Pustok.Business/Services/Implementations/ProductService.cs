@@ -10,17 +10,29 @@ namespace Pustok.Business.Services.Implementations;
 internal class ProductService : IProductService
 {
     private readonly IProductRepository _repository;
+    private readonly ICategoryRepository _categoryRepository;
     private readonly IMapper _mapper;
+    private readonly ICloudinaryService _cloudinaryService;
 
-    public ProductService(IProductRepository repository, IMapper mapper)
+    public ProductService(IProductRepository repository, IMapper mapper, ICloudinaryService cloudinaryService, ICategoryRepository categoryRepository)
     {
         _repository = repository;
         _mapper = mapper;
+        _cloudinaryService = cloudinaryService;
+        _categoryRepository = categoryRepository;
     }
 
     public async Task CreateAsync(ProductCreateDto dto)
     {
+        var isExistCategory = await _categoryRepository.AnyAsync(c => c.Id == dto.CategoryId);
+        if(!isExistCategory)
+            throw new NotFoundException("Category is not found"); 
+
         var products = _mapper.Map<Product>(dto);
+
+        var imagePath = await _cloudinaryService.FileUploadAsync(dto.Image);
+        products.ImagePath = imagePath;
+            
         await _repository.AddAsync(products);
         await _repository.SaveChangesAsync();
     }
@@ -31,6 +43,8 @@ internal class ProductService : IProductService
 
         if (product is null)
             throw new NotFoundException("Product is not found");
+
+        await _cloudinaryService.FileDeleteAsync(product.ImagePath);
         _repository.Delete(product);
         await _repository.SaveChangesAsync();
     }
@@ -54,11 +68,23 @@ internal class ProductService : IProductService
 
     public async Task UpdateAsync(ProductUpdateDto dto)
     {
+        var isExistCategory = await _categoryRepository.AnyAsync(c => c.Id == dto.CategoryId);
+        if (!isExistCategory)
+            throw new NotFoundException("Category is not found");
+
         var existItem = await _repository.GetByIdAsync(dto.Id);
         if (existItem is null)
             throw new NotFoundException("Producst is not found");
 
         existItem = _mapper.Map(dto, existItem);
+
+        if(dto.Image is { })
+        {
+            await _cloudinaryService.FileDeleteAsync(existItem.ImagePath);
+
+            var imagePath = await _cloudinaryService.FileUploadAsync(dto.Image);
+            existItem.ImagePath = imagePath;
+        }
 
         _repository.Update(existItem);
         await _repository.SaveChangesAsync();

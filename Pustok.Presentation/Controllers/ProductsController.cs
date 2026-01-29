@@ -25,7 +25,7 @@ namespace Pustok.Presentation.Controllers
         }
 
         [HttpPost]
-        public async Task<IActionResult> Create([FromBody] ProductCreateDto dto)
+        public async Task<IActionResult> Create([FromForm] ProductCreateDto dto)
         {
             await _productService.CreateAsync(dto);
             return Ok();
@@ -33,7 +33,7 @@ namespace Pustok.Presentation.Controllers
 
 
         [HttpPut]
-        public async Task<IActionResult> Update([FromBody] ProductUpdateDto dto)
+        public async Task<IActionResult> Update([FromForm] ProductUpdateDto dto)
         {
             await _productService.UpdateAsync(dto);
             return Ok();
