@@ -14,19 +14,25 @@ namespace Pustok.Business.Services.Implementations
 {
     internal class CategoryService(ICategoryRepository _repository, IMapper _mapper) : ICategoryService
     {
-        public async Task CreateAsync(CategoryCreateDto dto)
+        public async Task<ResultDto> CreateAsync(CategoryCreateDto dto)
         {
-            var isExistCategory = await _repository.AnyAsync(x=>x.Name.ToLower() == dto.Name.ToLower());
+            var isExistCategory = await _repository.AnyAsync(x => x.Name.ToLower() == dto.Name.ToLower());
 
-            if(isExistCategory)
+            if (isExistCategory)
                 throw new AlreadyExistException("Category with such name already exists");
 
             var category = _mapper.Map<Category>(dto);
             await _repository.AddAsync(category);
-            await _repository.SaveChangesAsync();  
+            await _repository.SaveChangesAsync();
+
+            return new ResultDto()
+            {
+                IsSucced = true,
+                Message = "Category Created Succesfully"
+            };
         }
 
-        public async Task DeleteAsync(Guid id)
+        public async Task<ResultDto> DeleteAsync(Guid id)
         {
             var category = await _repository.GetByIdAsync(id);
             if (category is null)
@@ -34,32 +40,44 @@ namespace Pustok.Business.Services.Implementations
 
             _repository.Delete(category);
             await _repository.SaveChangesAsync();
+
+            return new ResultDto()
+            {
+                IsSucced = true,
+                Message = "Category Deleted Succesfully"
+            };
         }
 
-        public async Task<List<CategoryGetDto>> GetAllAsync()
+        public async Task<ResultDto<List<CategoryGetDto>>> GetAllAsync()
         {
-            var categories = await _repository.GetAll().Include(x=>x.Products).ToListAsync();
+            var categories = await _repository.GetAll().Include(x => x.Products).ToListAsync();
 
             var dtos = _mapper.Map<List<CategoryGetDto>>(categories);
 
-            return dtos;
+            return new() { Data = dtos };
         }
 
-        public async Task<CategoryGetDto> GetByIdAsync(Guid id)
+        public async Task<ResultDto<CategoryGetDto>> GetByIdAsync(Guid id)
         {
             var category = await _repository.GetByIdAsync(id);
-            if(category is null)
+            if (category is null)
                 throw new NotFoundException("Category is not found");
 
             var dto = _mapper.Map<CategoryGetDto>(category);
-            return dto;
+            return new ResultDto<CategoryGetDto>()
+            {
+                IsSucced = true,
+                Message = "Category Retrieved Succesfully",
+                Data = dto
+            };
+
         }
 
-        public async Task UpdateAsync(CategoryUpdateDto dto)
+        public async Task<ResultDto> UpdateAsync(CategoryUpdateDto dto)
         {
             var category = await _repository.GetByIdAsync(dto.Id);
 
-            if(category is null)
+            if (category is null)
                 throw new NotFoundException("Category is not found");
 
             var isExistCategory = await _repository.AnyAsync(x => x.Name.ToLower() == dto.Name.ToLower());
@@ -70,6 +88,12 @@ namespace Pustok.Business.Services.Implementations
 
             _repository.Update(category);
             await _repository.SaveChangesAsync();
+
+            return new ResultDto()
+            {
+                IsSucced = true,
+                Message = "Category Updated Succesfully"
+            };
         }
     }
 }

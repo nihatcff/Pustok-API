@@ -22,22 +22,24 @@ internal class ProductService : IProductService
         _categoryRepository = categoryRepository;
     }
 
-    public async Task CreateAsync(ProductCreateDto dto)
+    public async Task<ResultDto> CreateAsync(ProductCreateDto dto)
     {
         var isExistCategory = await _categoryRepository.AnyAsync(c => c.Id == dto.CategoryId);
-        if(!isExistCategory)
-            throw new NotFoundException("Category is not found"); 
+        if (!isExistCategory)
+            throw new NotFoundException("Category is not found");
 
         var products = _mapper.Map<Product>(dto);
 
         var imagePath = await _cloudinaryService.FileUploadAsync(dto.Image);
         products.ImagePath = imagePath;
-            
+
         await _repository.AddAsync(products);
         await _repository.SaveChangesAsync();
+
+        return new ResultDto();
     }
 
-    public async Task DeleteAsync(Guid id)
+    public async Task<ResultDto> DeleteAsync(Guid id)
     {
         var product = await _repository.GetByIdAsync(id);
 
@@ -47,26 +49,31 @@ internal class ProductService : IProductService
         await _cloudinaryService.FileDeleteAsync(product.ImagePath);
         _repository.Delete(product);
         await _repository.SaveChangesAsync();
+        return new();
     }
 
 
-    public async Task<List<ProductGetDto>> GetAllAsync()
+    public async Task<ResultDto<List<ProductGetDto>>> GetAllAsync()
     {
-        var products = await _repository.GetAll().Include(x => x.Category).ToListAsync();
+        var products = await _repository.GetAll(true).Include(x => x.Category).ToListAsync();
         var dtos = _mapper.Map<List<ProductGetDto>>(products);
-        return dtos;
+
+        return new()
+        {
+            Data = dtos,
+        };
     }
 
-    public async Task<ProductGetDto?> GetByIdAsync(Guid id)
+    public async Task<ResultDto<ProductGetDto?>> GetByIdAsync(Guid id)
     {
         var product = await _repository.GetByIdAsync(id);
         if (product is null)
             throw new NotFoundException("Product is not found");
         var dto = _mapper.Map<ProductGetDto>(product);
-        return dto;
+        return new() { Data = dto, Message = "Get by Id is succesfull" };
     }
 
-    public async Task UpdateAsync(ProductUpdateDto dto)
+    public async Task<ResultDto> UpdateAsync(ProductUpdateDto dto)
     {
         var isExistCategory = await _categoryRepository.AnyAsync(c => c.Id == dto.CategoryId);
         if (!isExistCategory)
@@ -78,7 +85,7 @@ internal class ProductService : IProductService
 
         existItem = _mapper.Map(dto, existItem);
 
-        if(dto.Image is { })
+        if (dto.Image is { })
         {
             await _cloudinaryService.FileDeleteAsync(existItem.ImagePath);
 
@@ -88,5 +95,7 @@ internal class ProductService : IProductService
 
         _repository.Update(existItem);
         await _repository.SaveChangesAsync();
+
+        return new("Update is succesfully");   
     }
 }

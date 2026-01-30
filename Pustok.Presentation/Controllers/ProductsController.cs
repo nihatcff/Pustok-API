@@ -13,30 +13,30 @@ namespace Pustok.Presentation.Controllers
         [HttpGet]
         public async Task<IActionResult> GetAll()
         {
-            var products = await _productService.GetAllAsync();
-            return Ok(products);
+            var result = await _productService.GetAllAsync();
+            return Ok(result);
         }
 
         [HttpGet("{id}")]
         public async Task<IActionResult> GetById(Guid id)
         {
-            var product = await _productService.GetByIdAsync(id);
-            return Ok(product);
+            var result = await _productService.GetByIdAsync(id);
+            return Ok(result);
         }
 
         [HttpPost]
         public async Task<IActionResult> Create([FromForm] ProductCreateDto dto)
         {
-            await _productService.CreateAsync(dto);
-            return Ok();
+            var result = await _productService.CreateAsync(dto);
+            return Ok(result);
         }
 
 
         [HttpPut]
         public async Task<IActionResult> Update([FromForm] ProductUpdateDto dto)
         {
-            await _productService.UpdateAsync(dto);
-            return Ok();
+             var result = await _productService.UpdateAsync(dto);
+            return Ok(result);
         }
 
 
@@ -46,8 +46,8 @@ namespace Pustok.Presentation.Controllers
         [HttpDelete("{id}")]
         public async Task<IActionResult> Delete(Guid id)
         {
-            await _productService.DeleteAsync(id);
-            return Ok();
+            var result = await _productService.DeleteAsync(id);
+            return Ok(result);
         }
     }
 }
